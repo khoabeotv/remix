@@ -1,5 +1,6 @@
 defmodule Remix do
   use Application
+  require Logger
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
@@ -8,7 +9,7 @@ defmodule Remix do
 
     children = [
       # Define workers and child supervisors to be supervised
-      worker(Remix.Worker, [])
+      {Remix.Worker, []}
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
@@ -22,13 +23,17 @@ defmodule Remix do
 
     defmodule State, do: defstruct last_mtime: nil
 
-    def start_link do
+    def start_link(_) do
       Process.send_after(__MODULE__, :poll_and_reload, 10000)
       GenServer.start_link(__MODULE__, %State{}, name: Remix.Worker)
     end
 
+    def init(state) do
+      {:ok, state}
+    end
+
     def handle_info(:poll_and_reload, state) do
-      current_mtime = get_current_mtime
+      current_mtime = get_current_mtime()
 
       state = if state.last_mtime != current_mtime do
         comp_elixir = fn -> Mix.Tasks.Compile.Elixir.run(["--ignore-module-conflict"]) end
@@ -47,6 +52,8 @@ defmodule Remix do
               comp_escript.()
             end
         end
+        Logger.info("COMPILE SUCCESS !!!", ansi_color: :green)
+
         %State{last_mtime: current_mtime}
       else
         state
