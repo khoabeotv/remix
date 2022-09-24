@@ -38,7 +38,7 @@ defmodule Remix do
       state = if state.last_mtime != current_mtime do
         comp_elixir =
           fn ->
-            case Mix.Tasks.Compile.Elixir.run(["--ignore-module-conflict", "--verbose"]) do
+            case Mix.Tasks.Compile.Elixir.run(["--ignore-module-conflict", "--verbose", "--warnings-as-errors"]) do
               {:error, _} ->
                 Logger.error("COMPILE ERROR !!!")
               _ ->
